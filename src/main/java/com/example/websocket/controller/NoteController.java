@@ -1,11 +1,9 @@
 package com.example.websocket.controller;
 
-
 import com.example.websocket.dto.NoteMessage;
-import com.example.websocket.entity.Note;
-import com.example.websocket.service.NoteService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,26 +12,40 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/notes")
 public class NoteController {
     private final SimpMessagingTemplate messagingTemplate;
-    private final NoteService noteService; //
 
-    public NoteController(SimpMessagingTemplate messagingTemplate, NoteService noteService) {
+    public NoteController(SimpMessagingTemplate messagingTemplate) {
         this.messagingTemplate = messagingTemplate;
-        this.noteService = noteService;
+    }
+//
+//    @MessageMapping("/note")
+//    public ResponseEntity<NoteMessage> createNote(@RequestBody NoteMessage noteMessage) {
+//        if (noteMessage.isForEveryone()) {
+//            // Send to all subscribers on the specific topic
+//            messagingTemplate.convertAndSend("/topic/public", noteMessage);
+//        } else {
+//            noteMessage.getUserIds().forEach(user->
+//            {
+//                messagingTemplate.convertAndSendToUser(user,"/topic/private",noteMessage);
+//            });
+//        }
+//        return ResponseEntity.ok(noteMessage); // Respond with the note message
+//    }
+//
+
+    @MessageMapping("/public-note")
+    @SendTo("/topic/public")
+    public NoteMessage createPublicNote(@RequestBody NoteMessage noteMessage) {
+        // Handle the public note message and return it to the public topic
+        return noteMessage;
     }
 
-    @MessageMapping("/note")
-    public ResponseEntity<NoteMessage> createNote(@RequestBody NoteMessage noteMessage) {
-        // Store the note in the database
-//        System.out.print(noteMessage);
-        //Note savedNote = noteService.saveNote(noteMessage);
-
-        if (noteMessage.isForEveryone()) {
-            messagingTemplate.convertAndSend("/topic/private/" +  noteMessage.getUserId(), noteMessage);
-        } else {
-            messagingTemplate.convertAndSend("/topic/public", noteMessage);
-            System.out.print(noteMessage.toString());
-        }
-        return ResponseEntity.ok(noteMessage); // Respond with the saved note
+    // Endpoint for private notes
+    @MessageMapping("/private-note")
+    public ResponseEntity<NoteMessage> createPrivateNote(@RequestBody NoteMessage noteMessage) {
+        // Handle the private note message and send it to individual users
+        noteMessage.getUserIds().forEach(user -> {
+            messagingTemplate.convertAndSendToUser(user, "/topic/private", noteMessage);
+        });
+        return ResponseEntity.ok(noteMessage); // Respond with the note message
     }
-
 }

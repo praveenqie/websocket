@@ -7,6 +7,15 @@ public class NoteMessage {
     private String userId;
     private boolean isForEveryone;
     private List<String> userIds;
+    private String NoteRefTopicId;
+
+    public String getNoteRefTopicId() {
+        return NoteRefTopicId;
+    }
+
+    public void setNoteRefTopicId(String noteRefTopicId) {
+        NoteRefTopicId = noteRefTopicId;
+    }
 
     public NoteMessage(String text, String userId, boolean isForEveryone, List<String> userIds) {
         this.text = text;
